@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Car Scene - Enemies & Colors</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; /* Light sky blue background */ }
+        canvas { display: block; }
+        #info {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            z-index: 100;
+            text-shadow: 1px 1px 2px black;
+        }
+         #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            text-shadow: 2px 2px 4px black;
+            z-index: 200;
+            display: none; /* Hidden initially */
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Use W/Up Arrow to accelerate. Use A/D or Left/Right Arrows to turn while moving. Orbit with mouse.</div>
+    <div id="loading">Loading Car Model... 0%</div>
+    <div id="container"></div>
+
+    <!-- Import Map for Three.js Modules -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <!-- Main Three.js Logic -->
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+        let scene, camera, renderer, controls;
+        let carModel;
+        let carPlaceholder;
+        const keyboardState = {};
+        const carSpeed = 0.6;
+        const turnSpeed = 0.04;
+        const enemyCars = []; // Array to hold enemy cars (optional for future use)
+
+        // --- NEW: Vibrant Building Colors ---
+        const vibrantBuildingColors = [
+            0xff6347, // Tomato
+            0x4682B4, // SteelBlue
+            0x3CB371, // MediumSeaGreen
+            0xDAA520, // Goldenrod
+            0xBA55D3, // MediumOrchid
+            0xFF8C00, // DarkOrange
+            0x6A5ACD, // SlateBlue
+            0x20B2AA, // LightSeaGreen
+            0xCD5C5C, // IndianRed
+            0x9ACD32, // YellowGreen
+        ];
+
+        const loadingManager = new THREE.LoadingManager();
+        const loadingIndicator = document.getElementById('loading');
+
+        loadingManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
+            loadingIndicator.style.display = 'block';
+            loadingIndicator.textContent = 'Loading Car Model... 0%';
+        };
+
+        loadingManager.onLoad = function ( ) {
+            console.log( 'Loading complete!');
+             if (carPlaceholder) {
+                scene.remove(carPlaceholder);
+                carPlaceholder = null;
+            }
+            loadingIndicator.style.display = 'none';
+        };
+
+        loadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
+            const percent = Math.round((itemsLoaded / itemsTotal * 100) || 0);
+             loadingIndicator.textContent = `Loading Car Model... ${percent}%`;
+        };
+
+        loadingManager.onError = function ( url ) {
+            console.log( 'There was an error loading ' + url );
+            loadingIndicator.textContent = 'Error loading model!';
+            if (!carModel && !carPlaceholder) createCarPlaceholder();
+        };
+
+        // --- Initialization ---
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB);
+            scene.fog = new THREE.Fog(0x87CEEB, 150, 600);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 15, 30);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('container').appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.screenSpacePanning = false;
+            controls.maxPolarAngle = Math.PI / 2 - 0.05;
+            controls.minDistance = 10;
+            controls.maxDistance = 200;
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+            directionalLight.position.set(70, 100, 80);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            directionalLight.shadow.camera.near = 0.5;
+            directionalLight.shadow.camera.far = 500;
+            directionalLight.shadow.camera.left = -150;
+            directionalLight.shadow.camera.right = 150;
+            directionalLight.shadow.camera.top = 150;
+            directionalLight.shadow.camera.bottom = -150;
+            scene.add(directionalLight);
+
+            const groundGeo = new THREE.PlaneGeometry(1000, 1000);
+            const groundMat = new THREE.MeshStandardMaterial({ color: 0x228B22, side: THREE.DoubleSide });
+            const ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.position.y = -0.1;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            createRoad();
+            createEnvironment(); // This will now use vibrant colors and add enemy cars
+            createCarPlaceholder(); // Create placeholder initially
+
+            const carModelURL = 'https://threejs.org/examples/models/gltf/ferrari.glb';
+            loadCarModel(carModelURL);
+
+            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+
+            animate();
+        }
+
+        // --- Road Creation (Unchanged) ---
+        function createRoad() {
+            const roadWidth = 20;
+            const roadLength = 800;
+            const roadThickness = 0.2;
+
+            const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
+            const roadMat = new THREE.MeshStandardMaterial({ color: 0x444444, side: THREE.DoubleSide });
+            const road = new THREE.Mesh(roadGeo, roadMat);
+            road.rotation.x = -Math.PI / 2;
+            road.position.y = roadThickness / 2;
+            road.receiveShadow = true;
+            scene.add(road);
+
+            const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+            const dashLength = 5;
+            const gapLength = 5;
+            const numDashes = Math.floor(roadLength / (dashLength + gapLength));
+            const dashGeo = new THREE.PlaneGeometry(0.5, dashLength);
+
+            for (let i = -numDashes / 2; i < numDashes / 2; i++) {
+                 const lineSegment = new THREE.Mesh(dashGeo, lineMat);
+                 lineSegment.rotation.x = -Math.PI / 2;
+                 lineSegment.position.y = roadThickness / 2 + 0.01;
+                 lineSegment.position.z = i * (dashLength + gapLength) + dashLength / 2;
+                 scene.add(lineSegment);
+            }
+
+            const stripeWidth = 0.5;
+            const stripeLength = 2;
+            const stripeHeight = 0.1;
+            const numStripes = Math.floor(roadLength / stripeLength);
+            const redMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            const stripeGeo = new THREE.BoxGeometry(stripeWidth, stripeHeight, stripeLength);
+
+            function createStripe(xOffset) {
+                for (let i = -numStripes / 2; i < numStripes / 2; i++) {
+                    const material = (i % 2 === 0) ? redMat : whiteMat;
+                    const stripe = new THREE.Mesh(stripeGeo, material);
+                    stripe.position.set(xOffset, roadThickness / 2 + stripeHeight / 2, i * stripeLength + stripeLength / 2);
+                    stripe.castShadow = true;
+                    stripe.receiveShadow = true;
+                    scene.add(stripe);
+                }
+            }
+            createStripe(roadWidth / 2 + stripeWidth / 2);
+            createStripe(-roadWidth / 2 - stripeWidth / 2);
+        }
+
+        // --- Environment Creation (MODIFIED) ---
+        function createEnvironment() {
+            // const buildingColors = [0xaaaaaa, 0xbbbbbb, 0xcccccc, 0xdddddd, 0x8888aa, 0xaa8888]; // Old colors
+            const roadWidth = 20;
+            const roadLength = 800;
+            const buildingSpacing = 35; // Slightly more space
+            const sideOffset = roadWidth / 2 + 25; // Buildings further out
+            const buildingZoneLength = roadLength * 0.9;
+
+            for (let z = -buildingZoneLength / 2; z < buildingZoneLength / 2; z += buildingSpacing + Math.random() * 25) {
+                // Add buildings with VIBRANT colors
+                createBuilding(sideOffset + Math.random() * 15, z + Math.random() * 10 - 5, vibrantBuildingColors);
+                createBuilding(-sideOffset - Math.random() * 15, z + Math.random() * 10 - 5, vibrantBuildingColors);
+
+                // Occasionally add traffic lights
+                if (Math.random() < 0.15) {
+                     createTrafficLight(roadWidth / 2 + 2.5, z + Math.random() * 5);
+                     createTrafficLight(-roadWidth / 2 - 2.5, z + Math.random() * 5);
+                }
+
+                // --- NEW: Occasionally add enemy cars ---
+                if (Math.random() < 0.08) { // Lower probability for cars than lights/buildings
+                    // Place in left or right lane, with some jitter
+                    const laneOffset = roadWidth / 4; // Center of lane
+                    const xPos = (Math.random() < 0.5 ? -laneOffset : laneOffset) + (Math.random() * 2 - 1);
+                    const zPos = z + Math.random() * 10 - 5; // Slightly random Z near building Z
+                    createEnemyCar(xPos, zPos);
+                }
+            }
+        }
+
+        // --- Building Creation (MODIFIED only by using passed colors) ---
+        function createBuilding(x, z, colors) { // Added 'colors' parameter
+            const minWidth = 10, maxWidth = 20;
+            const minDepth = 10, maxDepth = 20;
+            const minHeight = 15, maxHeight = 80;
+
+            const width = THREE.MathUtils.randFloat(minWidth, maxWidth);
+            const height = THREE.MathUtils.randFloat(minHeight, maxHeight);
+            const depth = THREE.MathUtils.randFloat(minDepth, maxDepth);
+            // Use the passed vibrant color array
+            const color = colors[Math.floor(Math.random() * colors.length)];
+
+            const buildingGeo = new THREE.BoxGeometry(width, height, depth);
+            const buildingMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.2 });
+            const building = new THREE.Mesh(buildingGeo, buildingMat);
+
+            building.position.set(x, height / 2, z);
+            building.castShadow = true;
+            building.receiveShadow = true;
+            scene.add(building);
+        }
+
+        // --- Traffic Light Creation (Unchanged) ---
+        function createTrafficLight(x, z) {
+            const poleHeight = 8;
+            const poleRadius = 0.25;
+            const lightBoxWidth = 1.2;
+            const lightBoxHeight = 3;
+            const lightBoxDepth = 0.6;
+            const lightRadius = 0.35;
+
+            const poleGeo = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 16);
+            const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.5, metalness: 0.5 });
+            const pole = new THREE.Mesh(poleGeo, poleMat);
+            pole.position.set(x, poleHeight / 2, z);
+            pole.castShadow = true;
+            scene.add(pole);
+
+            const boxGeo = new THREE.BoxGeometry(lightBoxWidth, lightBoxHeight, lightBoxDepth);
+            const boxMat = new THREE.MeshStandardMaterial({ color: 0x282828, roughness: 0.7 });
+            const box = new THREE.Mesh(boxGeo, boxMat);
+            box.position.set(x, poleHeight - lightBoxHeight / 2 + 0.2, z);
+            box.castShadow = true;
+            scene.add(box);
+
+            const redLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            const yellowLightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
+            const greenLightMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
+            const lightGeo = new THREE.SphereGeometry(lightRadius, 16, 16);
+            const lightYOffset = lightRadius * 2 + 0.2;
+
+            const redLight = new THREE.Mesh(lightGeo, redLightMat);
+            redLight.position.set(x, poleHeight - lightRadius - 0.3, z + lightBoxDepth / 2 + 0.05);
+            scene.add(redLight);
+            const yellowLight = new THREE.Mesh(lightGeo, yellowLightMat);
+            yellowLight.position.set(x, redLight.position.y - lightYOffset, z + lightBoxDepth / 2 + 0.05);
+            scene.add(yellowLight);
+            const greenLight = new THREE.Mesh(lightGeo, greenLightMat);
+            greenLight.position.set(x, yellowLight.position.y - lightYOffset, z + lightBoxDepth / 2 + 0.05);
+            scene.add(greenLight);
+        }
+
+        // --- NEW: Enemy Car Creation ---
+        function createEnemyCar(x, z) {
+            const carWidth = 2.2;
+            const carHeight = 1.4;
+            const carLength = 4.8;
+            const carYPosition = carHeight / 2 + 0.1; // Place bottom near road surface
+
+            const enemyCarGeo = new THREE.BoxGeometry(carWidth, carHeight, carLength);
+            const enemyCarMat = new THREE.MeshStandardMaterial({
+                color: 0x0000ff, // Blue color
+                roughness: 0.4,
+                metalness: 0.1
+            });
+            const enemyCar = new THREE.Mesh(enemyCarGeo, enemyCarMat);
+
+            enemyCar.position.set(x, carYPosition, z);
+            // Randomly face forward or backward (just for visual variety)
+            enemyCar.rotation.y = (Math.random() < 0.5 ? 0 : Math.PI);
+
+            enemyCar.castShadow = true;
+            enemyCar.receiveShadow = true;
+            scene.add(enemyCar);
+            enemyCars.push(enemyCar); // Add to array (optional)
+        }
+
+
+        // --- Car Placeholder Creation (Unchanged) ---
+         function createCarPlaceholder() {
+            if (carPlaceholder) return;
+            const carGeo = new THREE.BoxGeometry(2.5, 1.5, 5);
+            const carMat = new THREE.MeshStandardMaterial({ color: 0x888888, transparent: true, opacity: 0.5 }); // Grey placeholder now
+            carPlaceholder = new THREE.Mesh(carGeo, carMat);
+            carPlaceholder.position.set(0, 0.75, 15);
+            carPlaceholder.castShadow = true;
+            carPlaceholder.receiveShadow = true;
+            scene.add(carPlaceholder);
+        }
+
+
+        // --- Car Model Loading (Unchanged) ---
+        function loadCarModel(modelPath) {
+             const loader = new GLTFLoader(loadingManager);
+             const dracoLoader = new DRACOLoader(loadingManager);
+             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
+             loader.setDRACOLoader(dracoLoader);
+
+             loader.load(
+                 modelPath,
+                 function (gltf) {
+                     console.log("Car model loaded successfully");
+                     carModel = gltf.scene;
+                     carModel.scale.set(1.0, 1.0, 1.0);
+                     carModel.position.set(0, 0.35, 15);
+                     carModel.rotation.y = Math.PI;
+                     scene.add(carModel);
+                     carModel.traverse(function (node) {
+                         if (node.isMesh) {
+                             node.castShadow = true;
+                             node.receiveShadow = true;
+                         }
+                     });
+                 },
+                 undefined, // Progress handled by manager
+                 function (error) {
+                     console.error('Error loading car model:', error);
+                     loadingIndicator.textContent = 'Error loading model! Using placeholder.';
+                     if (!carModel && !carPlaceholder) createCarPlaceholder();
+                 }
+             );
+        }
+
+        // --- Event Handlers (Unchanged) ---
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        function onKeyDown(event) { keyboardState[event.code] = true; }
+        function onKeyUp(event) { keyboardState[event.code] = false; }
+
+        // --- Update Car Movement (Unchanged - Forward Only) ---
+        function updateCar() {
+            const carObject = carModel;
+            if (!carObject) return;
+
+            // Basic camera follow target point
+            let lookAtTargetPos = carObject.position;
+
+            if (keyboardState['KeyW'] || keyboardState['ArrowUp']) {
+                const forward = new THREE.Vector3(0, 0, -1);
+                forward.applyQuaternion(carObject.quaternion);
+                carObject.position.add(forward.multiplyScalar(carSpeed));
+
+                if (keyboardState['KeyA'] || keyboardState['ArrowLeft']) {
+                    carObject.rotation.y += turnSpeed;
+                }
+                if (keyboardState['KeyD'] || keyboardState['ArrowRight']) {
+                    carObject.rotation.y -= turnSpeed;
+                }
+            }
+
+            // --- Update Camera Follow ---
+            if (carObject) {
+                const cameraOffset = new THREE.Vector3(0, 8, 15);
+                const carPosition = new THREE.Vector3();
+                carObject.getWorldPosition(carPosition);
+                cameraOffset.applyQuaternion(carObject.quaternion);
+                const targetCameraPosition = carPosition.clone().add(cameraOffset); // Use clone to avoid modifying original position
+
+                camera.position.lerp(targetCameraPosition, 0.05);
+
+                const lookAtOffset = new THREE.Vector3(0, 2, -10); // Point slightly ahead
+                lookAtOffset.applyQuaternion(carObject.quaternion);
+                const finalLookAt = carPosition.clone().add(lookAtOffset); // Use clone here too
+
+                // Smoothly lookAt
+                 // Create a temporary target vector for lerping the lookAt
+                const currentLookAt = controls.target.clone(); // Where the controls *are* looking
+                currentLookAt.lerp(finalLookAt, 0.07); // Lerp towards the desired lookAt point
+                camera.lookAt(currentLookAt);
+                controls.target.copy(currentLookAt); // Update controls target smoothly
+
+            }
+        }
+
+        // --- Animation Loop (Unchanged) ---
+        function animate() {
+            requestAnimationFrame(animate);
+            updateCar();
+            controls.update(); // Needs to be updated even with custom follow for damping/manual override
+            renderer.render(scene, camera);
+        }
+
+        // --- Start ---
+        init();
+
+    </script>
+</body>
+</html>
