@@ -3,447 +3,799 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Car Scene - Enemies & Colors</title>
+    <title>MCQ Quiz Challenge</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #87CEEB; /* Light sky blue background */ }
-        canvas { display: block; }
-        #info {
-            position: absolute;
-            top: 10px;
-            width: 100%;
-            text-align: center;
-            color: white;
-            font-family: Arial, sans-serif;
-            font-size: 16px;
-            z-index: 100;
-            text-shadow: 1px 1px 2px black;
+        :root {
+            --primary: #4a6bff;
+            --secondary: #ff6b6b;
+            --dark: #333;
+            --light: #f5f5f5;
+            --success: #4caf50;
+            --warning: #ff9800;
         }
-         #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f0f2f5;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             color: white;
-            font-size: 24px;
-            font-family: Arial, sans-serif;
-            text-shadow: 2px 2px 4px black;
-            z-index: 200;
-            display: none; /* Hidden initially */
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        /* Home Page Styles */
+        .home {
+            text-align: center;
+        }
+        
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .category-card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            width: 280px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .category-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .category-card i {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .category-card h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        /* Test Page Styles */
+        .test-container {
+            display: none;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .user-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .user-info h2 {
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            height: 10px;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        
+        .question-card {
+            margin-bottom: 30px;
+            display: none;
+        }
+        
+        .active-question {
+            display: block;
+        }
+        
+        .question-text {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        
+        .option {
+            padding: 12px 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .option.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: #3a5bef;
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #e65a5a;
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        /* Result Page Styles */
+        .result-container {
+            display: none;
+            text-align: center;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-container h2 {
+            color: var(--primary);
+            margin-bottom: 20px;
+        }
+        
+        .score-display {
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 20px 0;
+        }
+        
+        .score-circle {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0% 70%, #e0e0e0 70% 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+        
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            background: white;
+            border-radius: 50%;
+        }
+        
+        .score-value {
+            position: relative;
+            z-index: 1;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .feedback {
+            margin: 20px 0;
+            font-size: 1.2rem;
+        }
+        
+        .detailed-results {
+            margin-top: 30px;
+            text-align: left;
+        }
+        
+        .detailed-results h3 {
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .result-item.correct {
+            background-color: rgba(76, 175, 80, 0.1);
+        }
+        
+        .result-item.incorrect {
+            background-color: rgba(255, 0, 0, 0.05);
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .category-card {
+                width: 100%;
+            }
+            
+            .test-container, .result-container {
+                padding: 20px;
+            }
+            
+            .score-circle {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .score-circle::before {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .score-value {
+                font-size: 2rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header {
+                padding: 15px 0;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .question-text {
+                font-size: 1.1rem;
+            }
+            
+            .option {
+                padding: 10px;
+            }
+            
+            .btn {
+                padding: 8px 15px;
+                font-size: 0.9rem;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
-    <div id="info">Use W/Up Arrow to accelerate. Use A/D or Left/Right Arrows to turn while moving. Orbit with mouse.</div>
-    <div id="loading">Loading Car Model... 0%</div>
-    <div id="container"></div>
+    <div class="container">
+        <header>
+            <h1>MCQ Quiz Challenge</h1>
+            <p class="description">Test your knowledge across various subjects</p>
+        </header>
+        
+        <!-- Home Page -->
+        <div class="home" id="homePage">
+            <h2>Choose a Category</h2>
+            <div class="categories">
+                <div class="category-card" onclick="startTest('math')">
+                    <i class="fas fa-square-root-alt"></i>
+                    <h3>Mathematics</h3>
+                    <p>10 challenging math questions to test your numerical skills</p>
+                </div>
+                <div class="category-card" onclick="startTest('science')">
+                    <i class="fas fa-flask"></i>
+                    <h3>General Science</h3>
+                    <p>10 science questions covering physics, chemistry and biology</p>
+                </div>
+                <div class="category-card" onclick="startTest('reasoning')">
+                    <i class="fas fa-brain"></i>
+                    <h3>Logical Reasoning</h3>
+                    <p>10 reasoning questions to challenge your logical thinking</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Test Page -->
+        <div class="test-container" id="testPage">
+            <div class="user-info">
+                <h2 id="userGreeting">Welcome, User!</h2>
+                <p id="testCategory">Category: Mathematics</p>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <div id="questionContainer">
+                <!-- Questions will be inserted here by JavaScript -->
+            </div>
+            
+            <div class="navigation">
+                <button class="btn btn-outline" id="prevBtn" onclick="prevQuestion()">Previous</button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next</button>
+                <button class="btn btn-secondary" id="submitBtn" onclick="submitTest()" style="display: none;">Submit</button>
+            </div>
+        </div>
+        
+        <!-- Result Page -->
+        <div class="result-container" id="resultPage">
+            <h2>Quiz Results</h2>
+            <div class="score-circle">
+                <div class="score-value" id="scoreValue">0/30</div>
+            </div>
+            <h3 id="userResult">Well done, User!</h3>
+            <p class="feedback" id="feedbackText">You have a good understanding of this subject.</p>
+            
+            <div class="detailed-results">
+                <h3>Detailed Results</h3>
+                <div id="resultsList">
+                    <!-- Results will be inserted here by JavaScript -->
+                </div>
+            </div>
+            
+            <button class="btn btn-primary" onclick="goHome()" style="margin-top: 30px;">Take Another Quiz</button>
+        </div>
+    </div>
 
-    <!-- Import Map for Three.js Modules -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.161.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.161.0/examples/jsm/"
-            }
-        }
-    </script>
-
-    <!-- Main Three.js Logic -->
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-
-        let scene, camera, renderer, controls;
-        let carModel;
-        let carPlaceholder;
-        const keyboardState = {};
-        const carSpeed = 0.6;
-        const turnSpeed = 0.04;
-        const enemyCars = []; // Array to hold enemy cars (optional for future use)
-
-        // --- NEW: Vibrant Building Colors ---
-        const vibrantBuildingColors = [
-            0xff6347, // Tomato
-            0x4682B4, // SteelBlue
-            0x3CB371, // MediumSeaGreen
-            0xDAA520, // Goldenrod
-            0xBA55D3, // MediumOrchid
-            0xFF8C00, // DarkOrange
-            0x6A5ACD, // SlateBlue
-            0x20B2AA, // LightSeaGreen
-            0xCD5C5C, // IndianRed
-            0x9ACD32, // YellowGreen
-        ];
-
-        const loadingManager = new THREE.LoadingManager();
-        const loadingIndicator = document.getElementById('loading');
-
-        loadingManager.onStart = function ( url, itemsLoaded, itemsTotal ) {
-            loadingIndicator.style.display = 'block';
-            loadingIndicator.textContent = 'Loading Car Model... 0%';
-        };
-
-        loadingManager.onLoad = function ( ) {
-            console.log( 'Loading complete!');
-             if (carPlaceholder) {
-                scene.remove(carPlaceholder);
-                carPlaceholder = null;
-            }
-            loadingIndicator.style.display = 'none';
-        };
-
-        loadingManager.onProgress = function ( url, itemsLoaded, itemsTotal ) {
-            const percent = Math.round((itemsLoaded / itemsTotal * 100) || 0);
-             loadingIndicator.textContent = `Loading Car Model... ${percent}%`;
-        };
-
-        loadingManager.onError = function ( url ) {
-            console.log( 'There was an error loading ' + url );
-            loadingIndicator.textContent = 'Error loading model!';
-            if (!carModel && !carPlaceholder) createCarPlaceholder();
-        };
-
-        // --- Initialization ---
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB);
-            scene.fog = new THREE.Fog(0x87CEEB, 150, 600);
-
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 15, 30);
-
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-            document.getElementById('container').appendChild(renderer.domElement);
-
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.screenSpacePanning = false;
-            controls.maxPolarAngle = Math.PI / 2 - 0.05;
-            controls.minDistance = 10;
-            controls.maxDistance = 200;
-
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
-            scene.add(ambientLight);
-
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
-            directionalLight.position.set(70, 100, 80);
-            directionalLight.castShadow = true;
-            directionalLight.shadow.mapSize.width = 2048;
-            directionalLight.shadow.mapSize.height = 2048;
-            directionalLight.shadow.camera.near = 0.5;
-            directionalLight.shadow.camera.far = 500;
-            directionalLight.shadow.camera.left = -150;
-            directionalLight.shadow.camera.right = 150;
-            directionalLight.shadow.camera.top = 150;
-            directionalLight.shadow.camera.bottom = -150;
-            scene.add(directionalLight);
-
-            const groundGeo = new THREE.PlaneGeometry(1000, 1000);
-            const groundMat = new THREE.MeshStandardMaterial({ color: 0x228B22, side: THREE.DoubleSide });
-            const ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.position.y = -0.1;
-            ground.receiveShadow = true;
-            scene.add(ground);
-
-            createRoad();
-            createEnvironment(); // This will now use vibrant colors and add enemy cars
-            createCarPlaceholder(); // Create placeholder initially
-
-            const carModelURL = 'https://threejs.org/examples/models/gltf/ferrari.glb';
-            loadCarModel(carModelURL);
-
-            window.addEventListener('resize', onWindowResize);
-            window.addEventListener('keydown', onKeyDown);
-            window.addEventListener('keyup', onKeyUp);
-
-            animate();
-        }
-
-        // --- Road Creation (Unchanged) ---
-        function createRoad() {
-            const roadWidth = 20;
-            const roadLength = 800;
-            const roadThickness = 0.2;
-
-            const roadGeo = new THREE.PlaneGeometry(roadWidth, roadLength);
-            const roadMat = new THREE.MeshStandardMaterial({ color: 0x444444, side: THREE.DoubleSide });
-            const road = new THREE.Mesh(roadGeo, roadMat);
-            road.rotation.x = -Math.PI / 2;
-            road.position.y = roadThickness / 2;
-            road.receiveShadow = true;
-            scene.add(road);
-
-            const lineMat = new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.DoubleSide });
-            const dashLength = 5;
-            const gapLength = 5;
-            const numDashes = Math.floor(roadLength / (dashLength + gapLength));
-            const dashGeo = new THREE.PlaneGeometry(0.5, dashLength);
-
-            for (let i = -numDashes / 2; i < numDashes / 2; i++) {
-                 const lineSegment = new THREE.Mesh(dashGeo, lineMat);
-                 lineSegment.rotation.x = -Math.PI / 2;
-                 lineSegment.position.y = roadThickness / 2 + 0.01;
-                 lineSegment.position.z = i * (dashLength + gapLength) + dashLength / 2;
-                 scene.add(lineSegment);
-            }
-
-            const stripeWidth = 0.5;
-            const stripeLength = 2;
-            const stripeHeight = 0.1;
-            const numStripes = Math.floor(roadLength / stripeLength);
-            const redMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            const whiteMat = new THREE.MeshStandardMaterial({ color: 0xffffff });
-            const stripeGeo = new THREE.BoxGeometry(stripeWidth, stripeHeight, stripeLength);
-
-            function createStripe(xOffset) {
-                for (let i = -numStripes / 2; i < numStripes / 2; i++) {
-                    const material = (i % 2 === 0) ? redMat : whiteMat;
-                    const stripe = new THREE.Mesh(stripeGeo, material);
-                    stripe.position.set(xOffset, roadThickness / 2 + stripeHeight / 2, i * stripeLength + stripeLength / 2);
-                    stripe.castShadow = true;
-                    stripe.receiveShadow = true;
-                    scene.add(stripe);
+    <script>
+        // Quiz Data
+        const quizData = {
+            math: [
+                {
+                    question: "What is the value of π (pi) rounded to two decimal places?",
+                    options: ["3.14", "3.16", "3.12", "3.18"],
+                    answer: "3.14"
+                },
+                {
+                    question: "What is the square root of 144?",
+                    options: ["11", "12", "13", "14"],
+                    answer: "12"
+                },
+                {
+                    question: "Solve for x: 2x + 5 = 15",
+                    options: ["5", "10", "7.5", "2.5"],
+                    answer: "5"
+                },
+                {
+                    question: "What is the area of a rectangle with length 8 and width 5?",
+                    options: ["13", "40", "26", "30"],
+                    answer: "40"
+                },
+                {
+                    question: "What is 25% of 200?",
+                    options: ["25", "50", "75", "100"],
+                    answer: "50"
+                },
+                {
+                    question: "What is the next number in the sequence: 2, 4, 8, 16, ...?",
+                    options: ["20", "24", "32", "30"],
+                    answer: "32"
+                },
+                {
+                    question: "What is the sum of the angles in a triangle?",
+                    options: ["90°", "180°", "270°", "360°"],
+                    answer: "180°"
+                },
+                {
+                    question: "What is 7 squared?",
+                    options: ["14", "49", "56", "63"],
+                    answer: "49"
+                },
+                {
+                    question: "What is the value of 5! (5 factorial)?",
+                    options: ["25", "60", "120", "720"],
+                    answer: "120"
+                },
+                {
+                    question: "If a train travels 300 miles in 5 hours, what is its average speed?",
+                    options: ["50 mph", "55 mph", "60 mph", "65 mph"],
+                    answer: "60 mph"
                 }
-            }
-            createStripe(roadWidth / 2 + stripeWidth / 2);
-            createStripe(-roadWidth / 2 - stripeWidth / 2);
-        }
-
-        // --- Environment Creation (MODIFIED) ---
-        function createEnvironment() {
-            // const buildingColors = [0xaaaaaa, 0xbbbbbb, 0xcccccc, 0xdddddd, 0x8888aa, 0xaa8888]; // Old colors
-            const roadWidth = 20;
-            const roadLength = 800;
-            const buildingSpacing = 35; // Slightly more space
-            const sideOffset = roadWidth / 2 + 25; // Buildings further out
-            const buildingZoneLength = roadLength * 0.9;
-
-            for (let z = -buildingZoneLength / 2; z < buildingZoneLength / 2; z += buildingSpacing + Math.random() * 25) {
-                // Add buildings with VIBRANT colors
-                createBuilding(sideOffset + Math.random() * 15, z + Math.random() * 10 - 5, vibrantBuildingColors);
-                createBuilding(-sideOffset - Math.random() * 15, z + Math.random() * 10 - 5, vibrantBuildingColors);
-
-                // Occasionally add traffic lights
-                if (Math.random() < 0.15) {
-                     createTrafficLight(roadWidth / 2 + 2.5, z + Math.random() * 5);
-                     createTrafficLight(-roadWidth / 2 - 2.5, z + Math.random() * 5);
+            ],
+            science: [
+                {
+                    question: "What is the chemical symbol for gold?",
+                    options: ["Go", "Gd", "Au", "Ag"],
+                    answer: "Au"
+                },
+                {
+                    question: "Which planet is known as the Red Planet?",
+                    options: ["Venus", "Mars", "Jupiter", "Saturn"],
+                    answer: "Mars"
+                },
+                {
+                    question: "What is the hardest natural substance on Earth?",
+                    options: ["Gold", "Iron", "Diamond", "Quartz"],
+                    answer: "Diamond"
+                },
+                {
+                    question: "What is the main gas that makes up the Earth's atmosphere?",
+                    options: ["Oxygen", "Carbon dioxide", "Nitrogen", "Hydrogen"],
+                    answer: "Nitrogen"
+                },
+                {
+                    question: "What is the process by which plants make their own food?",
+                    options: ["Respiration", "Photosynthesis", "Transpiration", "Germination"],
+                    answer: "Photosynthesis"
+                },
+                {
+                    question: "Which of these is NOT a state of matter?",
+                    options: ["Solid", "Liquid", "Gas", "Energy"],
+                    answer: "Energy"
+                },
+                {
+                    question: "What is the human body's largest organ?",
+                    options: ["Liver", "Brain", "Skin", "Heart"],
+                    answer: "Skin"
+                },
+                {
+                    question: "What force pulls objects toward the center of the Earth?",
+                    options: ["Magnetism", "Gravity", "Friction", "Inertia"],
+                    answer: "Gravity"
+                },
+                {
+                    question: "Which of these is a noble gas?",
+                    options: ["Oxygen", "Nitrogen", "Helium", "Chlorine"],
+                    answer: "Helium"
+                },
+                {
+                    question: "What is the pH value of pure water?",
+                    options: ["5", "7", "9", "12"],
+                    answer: "7"
                 }
-
-                // --- NEW: Occasionally add enemy cars ---
-                if (Math.random() < 0.08) { // Lower probability for cars than lights/buildings
-                    // Place in left or right lane, with some jitter
-                    const laneOffset = roadWidth / 4; // Center of lane
-                    const xPos = (Math.random() < 0.5 ? -laneOffset : laneOffset) + (Math.random() * 2 - 1);
-                    const zPos = z + Math.random() * 10 - 5; // Slightly random Z near building Z
-                    createEnemyCar(xPos, zPos);
+            ],
+            reasoning: [
+                {
+                    question: "If all Bloops are Razzies and all Razzies are Lazzies, then all Bloops are definitely Lazzies?",
+                    options: ["True", "False", "Uncertain", "None of the above"],
+                    answer: "True"
+                },
+                {
+                    question: "Which number comes next in the series: 2, 6, 12, 20, ...?",
+                    options: ["24", "28", "30", "32"],
+                    answer: "30"
+                },
+                {
+                    question: "If a doctor gives you 3 pills and tells you to take one every half hour, how long will the pills last?",
+                    options: ["1 hour", "1.5 hours", "2 hours", "3 hours"],
+                    answer: "1 hour"
+                },
+                {
+                    question: "Which word does NOT belong: Apple, Banana, Orange, Carrot",
+                    options: ["Apple", "Banana", "Orange", "Carrot"],
+                    answer: "Carrot"
+                },
+                {
+                    question: "If you rearrange the letters 'CIFAIPC', you would get the name of a:",
+                    options: ["City", "Animal", "Ocean", "Country"],
+                    answer: "Ocean"
+                },
+                {
+                    question: "Which shape has more sides: hexagon or pentagon?",
+                    options: ["Hexagon", "Pentagon", "Both have same", "Cannot determine"],
+                    answer: "Hexagon"
+                },
+                {
+                    question: "If all Zips are Zaps and some Zaps are Zops, then some Zips are definitely Zops.",
+                    options: ["True", "False", "Uncertain", "None of the above"],
+                    answer: "Uncertain"
+                },
+                {
+                    question: "What is the missing number: 8, 16, 32, 64, ?",
+                    options: ["96", "112", "128", "144"],
+                    answer: "128"
+                },
+                {
+                    question: "If some Smaugs are Thors and all Thors are Thrains, then which statement must be true?",
+                    options: [
+                        "All Smaugs are Thrains",
+                        "Some Thrains are Smaugs",
+                        "No Smaugs are Thrains",
+                        "None of the above"
+                    ],
+                    answer: "Some Thrains are Smaugs"
+                },
+                {
+                    question: "Which is the odd one out: Square, Circle, Triangle, Cube",
+                    options: ["Square", "Circle", "Triangle", "Cube"],
+                    answer: "Cube"
                 }
+            ]
+        };
+
+        // Global Variables
+        let currentCategory = '';
+        let currentQuestion = 0;
+        let score = 0;
+        let userAnswers = [];
+        let userName = '';
+
+        // DOM Elements
+        const homePage = document.getElementById('homePage');
+        const testPage = document.getElementById('testPage');
+        const resultPage = document.getElementById('resultPage');
+        const userGreeting = document.getElementById('userGreeting');
+        const testCategory = document.getElementById('testCategory');
+        const progressBar = document.getElementById('progressBar');
+        const questionContainer = document.getElementById('questionContainer');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const submitBtn = document.getElementById('submitBtn');
+        const scoreValue = document.getElementById('scoreValue');
+        const userResult = document.getElementById('userResult');
+        const feedbackText = document.getElementById('feedbackText');
+        const resultsList = document.getElementById('resultsList');
+
+        // Start Test Function
+        function startTest(category) {
+            currentCategory = category;
+            userName = prompt("Please enter your name:") || "User";
+            
+            // Initialize user answers array
+            userAnswers = new Array(quizData[category].length).fill(null);
+            
+            // Update UI
+            homePage.style.display = 'none';
+            testPage.style.display = 'block';
+            userGreeting.textContent = `Welcome, ${userName}!`;
+            testCategory.textContent = `Category: ${getCategoryName(category)}`;
+            
+            // Load first question
+            loadQuestion(0);
+        }
+
+        // Get Category Name
+        function getCategoryName(category) {
+            switch(category) {
+                case 'math': return 'Mathematics';
+                case 'science': return 'General Science';
+                case 'reasoning': return 'Logical Reasoning';
+                default: return '';
             }
         }
 
-        // --- Building Creation (MODIFIED only by using passed colors) ---
-        function createBuilding(x, z, colors) { // Added 'colors' parameter
-            const minWidth = 10, maxWidth = 20;
-            const minDepth = 10, maxDepth = 20;
-            const minHeight = 15, maxHeight = 80;
-
-            const width = THREE.MathUtils.randFloat(minWidth, maxWidth);
-            const height = THREE.MathUtils.randFloat(minHeight, maxHeight);
-            const depth = THREE.MathUtils.randFloat(minDepth, maxDepth);
-            // Use the passed vibrant color array
-            const color = colors[Math.floor(Math.random() * colors.length)];
-
-            const buildingGeo = new THREE.BoxGeometry(width, height, depth);
-            const buildingMat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.8, metalness: 0.2 });
-            const building = new THREE.Mesh(buildingGeo, buildingMat);
-
-            building.position.set(x, height / 2, z);
-            building.castShadow = true;
-            building.receiveShadow = true;
-            scene.add(building);
-        }
-
-        // --- Traffic Light Creation (Unchanged) ---
-        function createTrafficLight(x, z) {
-            const poleHeight = 8;
-            const poleRadius = 0.25;
-            const lightBoxWidth = 1.2;
-            const lightBoxHeight = 3;
-            const lightBoxDepth = 0.6;
-            const lightRadius = 0.35;
-
-            const poleGeo = new THREE.CylinderGeometry(poleRadius, poleRadius, poleHeight, 16);
-            const poleMat = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.5, metalness: 0.5 });
-            const pole = new THREE.Mesh(poleGeo, poleMat);
-            pole.position.set(x, poleHeight / 2, z);
-            pole.castShadow = true;
-            scene.add(pole);
-
-            const boxGeo = new THREE.BoxGeometry(lightBoxWidth, lightBoxHeight, lightBoxDepth);
-            const boxMat = new THREE.MeshStandardMaterial({ color: 0x282828, roughness: 0.7 });
-            const box = new THREE.Mesh(boxGeo, boxMat);
-            box.position.set(x, poleHeight - lightBoxHeight / 2 + 0.2, z);
-            box.castShadow = true;
-            scene.add(box);
-
-            const redLightMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-            const yellowLightMat = new THREE.MeshBasicMaterial({ color: 0xffff00 });
-            const greenLightMat = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-            const lightGeo = new THREE.SphereGeometry(lightRadius, 16, 16);
-            const lightYOffset = lightRadius * 2 + 0.2;
-
-            const redLight = new THREE.Mesh(lightGeo, redLightMat);
-            redLight.position.set(x, poleHeight - lightRadius - 0.3, z + lightBoxDepth / 2 + 0.05);
-            scene.add(redLight);
-            const yellowLight = new THREE.Mesh(lightGeo, yellowLightMat);
-            yellowLight.position.set(x, redLight.position.y - lightYOffset, z + lightBoxDepth / 2 + 0.05);
-            scene.add(yellowLight);
-            const greenLight = new THREE.Mesh(lightGeo, greenLightMat);
-            greenLight.position.set(x, yellowLight.position.y - lightYOffset, z + lightBoxDepth / 2 + 0.05);
-            scene.add(greenLight);
-        }
-
-        // --- NEW: Enemy Car Creation ---
-        function createEnemyCar(x, z) {
-            const carWidth = 2.2;
-            const carHeight = 1.4;
-            const carLength = 4.8;
-            const carYPosition = carHeight / 2 + 0.1; // Place bottom near road surface
-
-            const enemyCarGeo = new THREE.BoxGeometry(carWidth, carHeight, carLength);
-            const enemyCarMat = new THREE.MeshStandardMaterial({
-                color: 0x0000ff, // Blue color
-                roughness: 0.4,
-                metalness: 0.1
+        // Load Question
+        function loadQuestion(index) {
+            currentQuestion = index;
+            
+            // Update progress bar
+            const progress = ((index + 1) / quizData[currentCategory].length) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            // Hide all question cards first
+            questionContainer.innerHTML = '';
+            
+            // Create question card
+            const questionCard = document.createElement('div');
+            questionCard.className = 'question-card active-question';
+            
+            const question = quizData[currentCategory][index];
+            
+            // Add question text
+            const questionText = document.createElement('div');
+            questionText.className = 'question-text';
+            questionText.textContent = `${index + 1}. ${question.question}`;
+            questionCard.appendChild(questionText);
+            
+            // Add options
+            const optionsDiv = document.createElement('div');
+            optionsDiv.className = 'options';
+            
+            question.options.forEach((option, i) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'option';
+                if (userAnswers[index] === i) {
+                    optionDiv.classList.add('selected');
+                }
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectOption(i);
+                optionsDiv.appendChild(optionDiv);
             });
-            const enemyCar = new THREE.Mesh(enemyCarGeo, enemyCarMat);
-
-            enemyCar.position.set(x, carYPosition, z);
-            // Randomly face forward or backward (just for visual variety)
-            enemyCar.rotation.y = (Math.random() < 0.5 ? 0 : Math.PI);
-
-            enemyCar.castShadow = true;
-            enemyCar.receiveShadow = true;
-            scene.add(enemyCar);
-            enemyCars.push(enemyCar); // Add to array (optional)
+            
+            questionCard.appendChild(optionsDiv);
+            questionContainer.appendChild(questionCard);
+            
+            // Update navigation buttons
+            prevBtn.style.display = index === 0 ? 'none' : 'block';
+            nextBtn.style.display = index === quizData[currentCategory].length - 1 ? 'none' : 'block';
+            submitBtn.style.display = index === quizData[currentCategory].length - 1 ? 'block' : 'none';
         }
 
-
-        // --- Car Placeholder Creation (Unchanged) ---
-         function createCarPlaceholder() {
-            if (carPlaceholder) return;
-            const carGeo = new THREE.BoxGeometry(2.5, 1.5, 5);
-            const carMat = new THREE.MeshStandardMaterial({ color: 0x888888, transparent: true, opacity: 0.5 }); // Grey placeholder now
-            carPlaceholder = new THREE.Mesh(carGeo, carMat);
-            carPlaceholder.position.set(0, 0.75, 15);
-            carPlaceholder.castShadow = true;
-            carPlaceholder.receiveShadow = true;
-            scene.add(carPlaceholder);
+        // Select Option
+        function selectOption(optionIndex) {
+            // Remove selected class from all options
+            const options = document.querySelectorAll('.option');
+            options.forEach(opt => opt.classList.remove('selected'));
+            
+            // Add selected class to clicked option
+            options[optionIndex].classList.add('selected');
+            
+            // Save user's answer
+            userAnswers[currentQuestion] = optionIndex;
         }
 
-
-        // --- Car Model Loading (Unchanged) ---
-        function loadCarModel(modelPath) {
-             const loader = new GLTFLoader(loadingManager);
-             const dracoLoader = new DRACOLoader(loadingManager);
-             dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/');
-             loader.setDRACOLoader(dracoLoader);
-
-             loader.load(
-                 modelPath,
-                 function (gltf) {
-                     console.log("Car model loaded successfully");
-                     carModel = gltf.scene;
-                     carModel.scale.set(1.0, 1.0, 1.0);
-                     carModel.position.set(0, 0.35, 15);
-                     carModel.rotation.y = Math.PI;
-                     scene.add(carModel);
-                     carModel.traverse(function (node) {
-                         if (node.isMesh) {
-                             node.castShadow = true;
-                             node.receiveShadow = true;
-                         }
-                     });
-                 },
-                 undefined, // Progress handled by manager
-                 function (error) {
-                     console.error('Error loading car model:', error);
-                     loadingIndicator.textContent = 'Error loading model! Using placeholder.';
-                     if (!carModel && !carPlaceholder) createCarPlaceholder();
-                 }
-             );
-        }
-
-        // --- Event Handlers (Unchanged) ---
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-        function onKeyDown(event) { keyboardState[event.code] = true; }
-        function onKeyUp(event) { keyboardState[event.code] = false; }
-
-        // --- Update Car Movement (Unchanged - Forward Only) ---
-        function updateCar() {
-            const carObject = carModel;
-            if (!carObject) return;
-
-            // Basic camera follow target point
-            let lookAtTargetPos = carObject.position;
-
-            if (keyboardState['KeyW'] || keyboardState['ArrowUp']) {
-                const forward = new THREE.Vector3(0, 0, -1);
-                forward.applyQuaternion(carObject.quaternion);
-                carObject.position.add(forward.multiplyScalar(carSpeed));
-
-                if (keyboardState['KeyA'] || keyboardState['ArrowLeft']) {
-                    carObject.rotation.y += turnSpeed;
-                }
-                if (keyboardState['KeyD'] || keyboardState['ArrowRight']) {
-                    carObject.rotation.y -= turnSpeed;
-                }
-            }
-
-            // --- Update Camera Follow ---
-            if (carObject) {
-                const cameraOffset = new THREE.Vector3(0, 8, 15);
-                const carPosition = new THREE.Vector3();
-                carObject.getWorldPosition(carPosition);
-                cameraOffset.applyQuaternion(carObject.quaternion);
-                const targetCameraPosition = carPosition.clone().add(cameraOffset); // Use clone to avoid modifying original position
-
-                camera.position.lerp(targetCameraPosition, 0.05);
-
-                const lookAtOffset = new THREE.Vector3(0, 2, -10); // Point slightly ahead
-                lookAtOffset.applyQuaternion(carObject.quaternion);
-                const finalLookAt = carPosition.clone().add(lookAtOffset); // Use clone here too
-
-                // Smoothly lookAt
-                 // Create a temporary target vector for lerping the lookAt
-                const currentLookAt = controls.target.clone(); // Where the controls *are* looking
-                currentLookAt.lerp(finalLookAt, 0.07); // Lerp towards the desired lookAt point
-                camera.lookAt(currentLookAt);
-                controls.target.copy(currentLookAt); // Update controls target smoothly
-
+        // Next Question
+        function nextQuestion() {
+            if (currentQuestion < quizData[currentCategory].length - 1) {
+                loadQuestion(currentQuestion + 1);
             }
         }
 
-        // --- Animation Loop (Unchanged) ---
-        function animate() {
-            requestAnimationFrame(animate);
-            updateCar();
-            controls.update(); // Needs to be updated even with custom follow for damping/manual override
-            renderer.render(scene, camera);
+        // Previous Question
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                loadQuestion(currentQuestion - 1);
+            }
         }
 
-        // --- Start ---
-        init();
+        // Submit Test
+        function submitTest() {
+            // Calculate score
+            score = 0;
+            quizData[currentCategory].forEach((question, index) => {
+                if (userAnswers[index] !== null && 
+                    question.options[userAnswers[index]] === question.answer) {
+                    score++;
+                }
+            });
+            
+            // Show results
+            showResults();
+        }
 
+        // Show Results
+        function showResults() {
+            testPage.style.display = 'none';
+            resultPage.style.display = 'block';
+            
+            // Update score
+            const totalQuestions = quizData[currentCategory].length;
+            scoreValue.textContent = `${score}/${totalQuestions}`;
+            
+            // Update result message
+            const percentage = (score / totalQuestions) * 100;
+            userResult.textContent = `${userName}, you scored ${score} out of ${totalQuestions}!`;
+            
+            if (percentage >= 80) {
+                feedbackText.textContent = "Excellent work! You have a strong understanding of this subject.";
+            } else if (percentage >= 60) {
+                feedbackText.textContent = "Good job! You have a decent understanding but there's room for improvement.";
+            } else if (percentage >= 40) {
+                feedbackText.textContent = "Not bad! Consider reviewing the material to improve your knowledge.";
+            } else {
+                feedbackText.textContent = "Keep practicing! You'll improve with more study and practice.";
+            }
+            
+            // Update score circle
+            const scoreCircle = document.querySelector('.score-circle');
+            scoreCircle.style.background = `conic-gradient(var(--primary) 0% ${percentage}%, #e0e0e0 ${percentage}% 100%)`;
+            
+            // Show detailed results
+            resultsList.innerHTML = '';
+            quizData[currentCategory].forEach((question, index) => {
+                const resultItem = document.createElement('div');
+                resultItem.className = 'result-item';
+                
+                const isCorrect = userAnswers[index] !== null && 
+                                 question.options[userAnswers[index]] === question.answer;
+                
+                if (isCorrect) {
+                    resultItem.classList.add('correct');
+                } else {
+                    resultItem.classList.add('incorrect');
+                }
+                
+                const questionText = document.createElement('div');
+                questionText.textContent = `${index + 1}. ${question.question}`;
+                
+                const answerStatus = document.createElement('div');
+                if (userAnswers[index] === null) {
+                    answerStatus.textContent = "Not answered";
+                    answerStatus.style.color = "var(--warning)";
+                } else if (isCorrect) {
+                    answerStatus.textContent = "✓ Correct";
+                    answerStatus.style.color = "var(--success)";
+                } else {
+                    answerStatus.textContent = `✗ Incorrect (Correct: ${question.answer})`;
+                    answerStatus.style.color = "var(--secondary)";
+                }
+                
+                resultItem.appendChild(questionText);
+                resultItem.appendChild(answerStatus);
+                resultsList.appendChild(resultItem);
+            });
+        }
+
+        // Go Home
+        function goHome() {
+            resultPage.style.display = 'none';
+            homePage.style.display = 'block';
+            currentQuestion = 0;
+            score = 0;
+            userAnswers = [];
+        }
     </script>
 </body>
 </html>
